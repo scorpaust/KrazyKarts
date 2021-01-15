@@ -6,6 +6,45 @@
 #include "GameFramework/Pawn.h"
 #include "GoKart.generated.h"
 
+#pragma region Structs
+
+USTRUCT()
+struct FGoKartMove {
+
+	GENERATED_USTRUCT_BODY()
+
+		UPROPERTY()
+		float Throttle;
+
+	UPROPERTY()
+		float SteeringThrow;
+
+	UPROPERTY()
+		float DeltaTime;
+
+	UPROPERTY()
+		float Time;
+};
+
+USTRUCT()
+struct FGoKartState {
+
+	GENERATED_USTRUCT_BODY()
+
+		UPROPERTY()
+		FVector Velocity;
+
+	UPROPERTY()
+		FGoKartMove LastMove;
+
+	UPROPERTY()
+		FTransform Transform;
+
+};
+
+#pragma endregion
+
+
 UCLASS()
 class KRAZYKARTS_API AGoKart : public APawn
 {
@@ -32,12 +71,16 @@ protected:
 
 public:	
 
+#pragma region Game State Variables
+
+	AGameStateBase* GameState;
+
+#pragma endregion
+
 #pragma region Tick Function
 
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	void ApplyRotation(float DeltaTime);
 
 #pragma endregion
 	
@@ -60,13 +103,17 @@ private:
 	UPROPERTY(EditAnywhere, Category = "Physics")
 	float MaxDrivingForce = 10000;
 
-	// The number of degrees rotated per second at full control throw (degree/s)
+	// The minimum radius of the car turning circle at full lock (m)
 	UPROPERTY(EditAnywhere, Category = "Physics")
-	float MaxDegreesPerSecond;
+	float MinTurningRadius;
 
 	// Higher means more drag
 	UPROPERTY(EditAnywhere, Category = "Physics")
 	float DragCoefficient;
+
+	// Higher means more rolling resistance
+	UPROPERTY(EditAnywhere, Category = "Physics")
+	float RollingResistanceCoefficient;
 
 	UPROPERTY(EditAnywhere, Category = "Physics")
 	class UBoxComponent* Collider;
@@ -75,27 +122,56 @@ private:
 
 #pragma region Movement Variables
 
-
-	void MoveForward(float Value);
-
-	void MoveRight(float Value);
-
+	UPROPERTY(Replicated)
 	FVector Velocity;
 
 	float Throttle;
 
 	float SteeringThrow;
 
+	TArray<FGoKartMove> UnaknowledgeMoves;
+
 
 #pragma endregion	
 
+#pragma region Network Variables
+
+	UPROPERTY(ReplicatedUsing = OnRep_ServerState)
+	FGoKartState ServerState;
+
+#pragma endregion
+
+#pragma region Network Functions
+
+	UFUNCTION()
+	void OnRep_ServerState();
+
+#pragma endregion
+
 #pragma region Physics Functions
 
-	FVector GetResistance();
+	FVector GetAirResistance();
+
+	FVector GetRollingResistance();
 
 #pragma endregion
 
 #pragma region Movement Functions
+
+	void SimulateMove(FGoKartMove Move);
+
+	FGoKartMove CreateMove(float DeltaTime);
+
+	void ClearAknowledgeMoves(FGoKartMove LastMove);
+
+	void MoveForward(float Value);
+
+	void MoveRight(float Value);
+
+	UFUNCTION(Server, Reliable, WithValidation)
+	void Server_SendMove(FGoKartMove Move);
+
+	void ApplyRotation(float DeltaTime, float SteeringThrow);
 
 	void UpdateLocationFromVelocity(float DeltaTime);
 
