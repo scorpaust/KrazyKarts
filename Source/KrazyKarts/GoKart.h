@@ -35,6 +35,13 @@ protected:
 
 public:	
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UGoKartMovementComponent* MovementComponent;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	class UGoKartMovementReplicator* MovementReplicator;
+
+
 #pragma region Tick Function
 
 	// Called every frame
@@ -56,12 +63,6 @@ private:
 	
 	UPROPERTY(EditAnywhere, Category = "Physics")
 	class UBoxComponent* Collider;
-
-	UPROPERTY(EditAnywhere, Category = "Components")
-	class UGoKartMovementComponent* MovementComponent;
-
-	UPROPERTY(EditAnywhere, Category = "Components")
-	class UGoKartMovementReplicator* MovementReplicator;
 
 #pragma endregion	
 

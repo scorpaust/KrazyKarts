@@ -21,6 +21,10 @@ AGoKart::AGoKart()
 
 	RootComponent = Collider;
 
+	bReplicates = true;
+
+	SetReplicateMovement(false);
+
 	MovementComponent = CreateDefaultSubobject<UGoKartMovementComponent>(TEXT("MovementComponent"));
 
 	MovementReplicator = CreateDefaultSubobject<UGoKartMovementReplicator>(TEXT("MovementReplicator"));
